@@ -1,0 +1,175 @@
+<style lang="less">
+
+</style>
+
+<script>
+import wepy from "wepy";
+export default class extends wepy.app {
+  config = {
+    pages: [
+      "pages/library",
+      "pages/personal",
+      "pages/book-detail",
+      "pages/book-history"
+    ],
+    window: {
+      backgroundTextStyle: "dark",
+      navigationBarBackgroundColor: "#ffffff",
+      navigationBarTitleText: "CDI图书馆",
+      navigationBarTextStyle: "black",
+      enablePullDownRefresh: true
+    },
+    // baseUrl: "http://192.168.199.136:9901/",
+    baseUrl: "https://www.cdip.philips.com.cn/miniapp/",
+    tabBar: {
+      color: "#000000",
+      selectedColor: "#09bb07",
+      borderStyle: "white",
+      list: [
+        {
+          pagePath: "pages/library",
+          text: "图书馆",
+          selectedIconPath: "pages/images/library_selected.png",
+          iconPath: "pages/images/library.png"
+        },
+        {
+          pagePath: "pages/personal",
+          text: "个人中心",
+          selectedIconPath: "pages/images/profile_selected.png",
+          iconPath: "pages/images/profile.png"
+        }
+      ]
+    }
+  };
+  globalData = {
+    userInfo: null
+  };
+  constructor() {
+    super();
+    this.use("requestfix");
+    this.use("promisify");
+  }
+  onLaunch() {
+    console.log("on launch");
+  }
+  getUserInfo() {
+    return new Promise((resolve, reject) => {
+      if (this.globalData.userInfo) {
+        console.log("get from cache");
+        resolve(this.globalData.userInfo);
+      } else {
+        wepy
+          .getUserInfo()
+          .then(res => {
+            // console.log("globle data: " + JSON.stringify(res));
+            this.globalData.userInfo = res.userInfo;
+            console.log(
+              "user info: " + JSON.stringify(this.globalData.userInfo)
+            );
+            resolve(this.globalData.userInfo);
+          })
+          .catch(error => {
+            console.log("error: ", error);
+            reject();
+          });
+      }
+    });
+  }
+  getToken() {
+    return new Promise((resolve, reject) => {
+      //check login status
+      wepy
+        .checkSession()
+        .then(res => {
+          //get token from storage
+          console.log("check storage...");
+          wepy
+            .getStorage({
+              key: "accessToken"
+            })
+            .then(res => {
+              console.log("get token from storage success:" + res.data);
+              if (res.data != undefined && res.data != null) {
+                resolve(res.data);
+              } else {
+                this.doLogin().then(token => {
+                  resolve(token);
+                });
+              }
+            })
+            .catch(error => {
+              console.log("can not get token from storage ");
+              this.doLogin().then(token => {
+                resolve(token);
+              });
+            });
+        }) //do login
+        .catch(error => {
+          console.log("invaild token");
+          this.doLogin().then(token => {
+            resolve(token);
+          });
+        });
+    });
+  }
+  doLogin() {
+    return new Promise((resolve, reject) => {
+      //wechat login
+      console.log("Do Wechat Login.");
+      wepy.login().then(res => {
+        console.log("CODE: " + res.code);
+        //login with backend
+        console.log("login from backend...");
+        this.getUserInfo()
+          .then(userInfo => {
+            wepy
+              .request({
+                url: this.config.baseUrl + "login",
+                method: "POST",
+                header: {
+                  "App-ID": "book"
+                },
+                data: {
+                  nickname: userInfo.nickName,
+                  img_url: userInfo.avatarUrl,
+                  code: res.code
+                }
+              })
+              .then(res => {
+                console.log("login from backend: " + JSON.stringify(res));
+                this.globalData.accessToken = res.data.token;
+                wepy
+                  .setStorage({
+                    key: "accessToken",
+                    data: this.globalData.accessToken
+                  })
+                  .then(success => {
+                    resolve(this.globalData.accessToken);
+                    console.log(
+                      "sava token to storage success." +
+                        this.globalData.accessToken
+                    );
+                  });
+              })
+              .catch(error => {
+                console.log("Backend can not be connected." + error);
+                wx.showToast({
+                  title: "登录失败，请检查网络",
+                  icon: "none",
+                  duration: 2000
+                });
+              });
+          })
+          .catch(error => {
+            console.log("Auth error." + error);
+            wx.showToast({
+              title: "登录失败，授权错误",
+              icon: "none",
+              duration: 2000
+            });
+          });
+      });
+    });
+  }
+}
+</script>

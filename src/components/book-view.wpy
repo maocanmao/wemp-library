@@ -1,0 +1,74 @@
+<style lang="less">
+.bookView {
+  display: flex;
+  flex-direction: column;
+  margin-top: 30rpx;
+  width: 340rpx;
+  height: 500rpx;
+  align-items: center;
+  background-color: #ffffff;
+  border-style: solid;
+  border-width: 1rpx;
+  border-color: rgb(234, 234, 234);
+}
+.bookImage {
+  width: 280rpx;
+  height: 360rpx;
+  margin-top: 20rpx;
+}
+.text {
+  font-size: 30rpx;
+  width: 300rpx;
+  margin-top: 30rpx;
+  overflow: hidden;
+}
+.status {
+  position: absolute;
+  width: 120rpx;
+  height: 55rpx;
+  background-color: rgb(3, 138, 159);
+  border-radius: 10%;
+  text-align: center;
+  top: -5%;
+  right: -5%;
+}
+.bookWrapper {
+  position: relative;
+}
+</style>
+
+<template>
+  <view class="bookView" @tap="tap({{title}},{{imageSrc}},{{id}})">
+    <view class="bookWrapper">
+      <image class="bookImage" mode="aspectFill" src="{{imageSrc}}"></image>
+      <view wx:if="{{status}}" class="status">
+        <text style="color:#ffffff;font-size:12pt">借阅中</text>
+      </view>
+    </view>
+    <text class="text">{{title}}</text>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+export default class BookView extends wepy.component {
+  components = {};
+  data = {};
+  methods = {
+    tap(title, imageSrc, id) {
+      console.log("child is clicked" + id);
+      wx.navigateTo({
+        url: "../pages/book-detail?id=" + id
+      });
+    }
+  };
+  events = {};
+  // Other propertie
+  props = {
+    title: String,
+    imageSrc: String,
+    id: Number,
+    status: Boolean
+  };
+}
+</script>

@@ -1,0 +1,152 @@
+<style lang="less">
+.container {
+  background: rgb(251, 251, 251);
+}
+.image {
+  height: 144rpx;
+  width: 144rpx;
+  margin-left: 40rpx;
+  border-radius: 50%;
+  float: left;
+}
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20rpx 0;
+  flex-direction: column;
+}
+.checkin-btn {
+  margin-top: 20rpx;
+  width: 500rpx;
+  margin-bottom: 20rpx;
+  background-color: rgb(3, 138, 159);
+  color: #ffffff;
+}
+.order-list {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 5rpx;
+  background: #ffffff;
+  padding-bottom: 30rpx;
+  padding-top: 30rpx;
+}
+.book-image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 32rpx;
+  margin-left: 32rpx;
+}
+.return-btn {
+  margin-right: 20rpx;
+  height: 70rpx;
+  font-size: 10pt;
+  width: 140rpx;
+  background-color: rgb(3, 138, 159);
+  color: white;
+}
+.personal {
+  background-color: #ffffff;
+  width: 100%;
+  height: 144rpx;
+}
+</style>
+
+<template>
+  <view class="container">
+    <view class="button-container">
+      <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">当前</text>
+      <view class="order-list" wx:if="{{currentBorrow}}">
+        <image class="book-image" src="{{currentBorrow.imgUrl}}"></image>
+        <text style="font-size:12pt; margin-left:30rpx">{{currentBorrow.nickName}}</text>
+      </view>
+      <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">先前借阅</text>
+      <view class="order-list" wx:for="{{bookHistory}}">
+        <image class="book-image" src="{{item.imgUrl}}"></image>
+        <text style="font-size:12pt; margin-left:30rpx">{{item.nickName}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+export default class BookHistory extends wepy.page {
+  config = {
+    navigationBarTitleText: "test"
+  };
+  data = {
+    avatar: null,
+    name: null,
+    bookHistory: [],
+    currentBorrow: null,
+    bookId: null
+  };
+  methods = {};
+  onLoad(option) {
+    console.log("onLoad");
+    this.setNavBar();
+    this.bookId = option.bookId;
+    console.log("bookId: ", this.bookId);
+  }
+  onShow() {
+    this.getHistory();
+  }
+  setNavBar() {
+    wx.setNavigationBarTitle({
+      title: " 借阅记录"
+    });
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: this.$parent.config.window.navigationBarBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: "easeIn"
+      }
+    });
+    wx.showTabBar({
+      aniamtion: true
+    });
+  }
+  getHistory() {
+    this.$parent.getToken().then(token => {
+      wepy
+        .request(
+          this.$parent.config.baseUrl +
+            "books/book-order-history?book_id=" +
+            this.bookId +
+            "&token=" +
+            token
+        )
+        .then(res => {
+          this.bookHistory = res.data.data;
+          if (this.bookHistory[0] != null && this.bookHistory[0].status == 1) {
+            this.currentBorrow = this.bookHistory.shift();
+          }
+          console.log("bookHistory list: ", this.bookHistory);
+          this.$apply();
+        })
+        .catch(error => {
+          console.log("bookHistory error: ", error);
+        });
+    });
+  }
+  onShareAppMessage(res) {
+    if (res.from === "button") {
+      // 来自页面内转发按钮
+      console.log(res.target);
+    }
+    return {
+      title: "CDI 图书馆",
+      path: "/pages/library",
+      success: function(res) {
+        // 转发成功
+      },
+      fail: function(res) {
+        // 转发失败
+      }
+    };
+  }
+}
+</script>

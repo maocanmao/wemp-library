@@ -1,0 +1,104 @@
+<style lang="less">
+.bookContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-top: 50rpx;
+}
+.containerWrapper {
+  background-color: rgb(251, 251, 251);
+}
+</style>
+
+<template>
+  <view class="container,containerWrapper">
+
+    <view class="bookContainer">
+      <repeat for="{{bookList}}" item="item">
+        <bookView title="item.title" imageSrc="item.image" id="item.id" status="item.status==0?false:true"></bookView>
+      </repeat>
+    </view>
+  </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+import BookView from "../components/book-view";
+export default class Library extends wepy.page {
+  config = {
+    navigationBarTitleText: "test"
+  };
+  components = {
+    bookView: BookView
+  };
+  data = {
+    bookList: []
+  };
+  onLoad() {
+    console.log("onLoad");
+    this.setNavBar();
+    this.getBooks();
+  }
+  onShow() {
+    // this.getBooks();
+  }
+  setNavBar() {
+    wx.setNavigationBarTitle({
+      title: this.$parent.config.window.navigationBarTitleText
+    });
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: this.$parent.config.window.navigationBarBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: "easeIn"
+      }
+    });
+  }
+  getBooks() {
+    wepy.showLoading({
+      title: "请等待",
+      mask: true
+    });
+    this.$parent.getToken().then(token => {
+      wepy
+        .request(this.$parent.config.baseUrl + "books/list?token=" + token)
+        .then(res => {
+          wepy.hideLoading();
+          console.log("get books: ", res);
+          this.bookList = res.data.data;
+          this.$apply();
+          wx.stopPullDownRefresh();
+        })
+        .catch(error => {
+          wx.stopPullDownRefresh();
+          wepy.hideLoading();
+          console.log("get books error: ", error);
+        });
+    });
+  }
+
+  onShareAppMessage(res) {
+    if (res.from === "button") {
+      // 来自页面内转发按钮
+      console.log(res.target);
+    }
+    return {
+      title: "CDI 图书馆",
+      path: "/pages/library",
+      success: function(res) {
+        // 转发成功
+      },
+      fail: function(res) {
+        // 转发失败
+      }
+    };
+  }
+
+  onPullDownRefresh() {
+    this.getBooks();
+  }
+}
+</script>

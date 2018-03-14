@@ -1,0 +1,179 @@
+<style lang="less">
+.button-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+.image {
+  width: 340rpx;
+  height: 400rpx;
+  margin-bottom: 30rpx;
+}
+.borrow {
+  width: 670rpx;
+  margin-top: 30rpx;
+  margin-bottom: 20rpx;
+  background-color: rgb(3, 138, 159);
+  color: #ffffff;
+}
+.bookImageContainer {
+  display: flex;
+  background-color: #ffffff;
+  flex-direction: column;
+  align-items: center;
+}
+.bookTitle {
+  font-size: 30rpx;
+  width: 300rpx;
+  margin-bottom: 30rpx;
+  overflow: hidden;
+  color: #000000;
+}
+.detailContainer {
+  background-color: rgb(251, 251, 251);
+  padding: 30rpx;
+}
+</style>
+
+<template>
+  <view wx:if="{{bookDetail}}">
+    <view class="button-container">
+      <view class="bookImageContainer">
+        <image class="image" src="{{bookImage}}"></image>
+        <text class="bookTitle">{{bookTitle}}</text>
+      </view>
+      <view class="detailContainer">
+        <text style=" background-color: rgb(251, 251, 251);margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">内容简介\n</text>
+        <text style="font-size:14pt; color:rgb(95,95,95)">{{bookDetail}}</text>
+      </view>
+      <button class="weui-btn record-btn borrow"  disabled="{{!canBorrow}}" @tap="borrow()">借阅</button>
+      <button class="weui-btn record-btn borrow"  @tap="gotoHistory()">查询借阅记录</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+export default class Personal extends wepy.page {
+  config = {
+    navigationBarTitleText: "test"
+  };
+  data = {
+    bookDetail: null,
+    bookId: null,
+    bookImage: null,
+    bookTitle: null,
+    canBorrow: true
+  };
+  onLoad(option) {
+    console.log("onLoad");
+    this.setNavBar();
+    this.bookId = option.id;
+    this.loadBookDetail();
+  }
+  setNavBar() {
+    wx.setNavigationBarTitle({
+      title: "书籍详情"
+    });
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: this.$parent.config.window.navigationBarBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: "easeIn"
+      }
+    });
+    wx.showTabBar({
+      aniamtion: true
+    });
+  }
+  loadBookDetail() {
+    wepy.showLoading({
+      title: "请等待",
+      mask: true
+    });
+    this.$parent.getToken().then(token => {
+      wepy
+        .request(
+          this.$parent.config.baseUrl +
+            "books/detail/" +
+            this.bookId +
+            "?token=" +
+            token
+        )
+        .then(res => {
+          wepy.hideLoading();
+          var data = res.data.data;
+          console.log("load book: ", data);
+          this.bookDetail = data.summary;
+          this.bookImage = data.image;
+          this.bookTitle = data.title;
+          if (data.status == 1) {
+            this.canBorrow = false;
+          } else {
+            this.canBorrow = true;
+          }
+          this.$apply();
+        })
+        .catch(error => {
+          wepy.hideLoading();
+          console.log("check in book error: ", error);
+        });
+    });
+  }
+  borrow() {
+    wepy.showLoading({
+      title: "请等待",
+      mask: true
+    });
+    this.$parent.getToken().then(token => {
+      wepy
+        .request({
+          url: this.$parent.config.baseUrl + "books/borrow?token=" + token,
+          method: "POST",
+          data: {
+            bookId: this.bookId
+          }
+        })
+        .then(res => {
+          wepy.hideLoading();
+          console.log("borrow book successfully: ", res);
+          wx.showToast({
+            title: "借阅成功",
+            icon: "none",
+            duration: 2000
+          });
+          this.canBorrow = false;
+          this.$apply();
+        })
+        .catch(error => {
+          wepy.hideLoading();
+          console.log("borrow book error: ", error);
+        });
+    });
+  }
+
+  gotoHistory() {
+    wx.navigateTo({
+      url: "book-history?bookId=" + this.bookId
+    });
+  }
+
+  onShareAppMessage(res) {
+    if (res.from === "button") {
+      // 来自页面内转发按钮
+      console.log(res.target);
+    }
+    return {
+      title: "CDI 图书馆",
+      path: "/pages/library",
+      success: function(res) {
+        // 转发成功
+      },
+      fail: function(res) {
+        // 转发失败
+      }
+    };
+  }
+}
+</script>

@@ -1,0 +1,214 @@
+<style lang="less">
+.container {
+  background: rgb(251, 251, 251);
+}
+.image {
+  height: 144rpx;
+  width: 144rpx;
+  margin-left: 40rpx;
+  border-radius: 50%;
+  float: left;
+}
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20rpx 0;
+  flex-direction: column;
+}
+.checkin-btn {
+  margin-top: 20rpx;
+  width: 500rpx;
+  margin-bottom: 20rpx;
+  background-color: rgb(3, 138, 159);
+  color: #ffffff;
+}
+.order-list {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5rpx;
+  background: #ffffff;
+  padding-bottom: 30rpx;
+  padding-top: 30rpx;
+}
+.book-image {
+  width: 140rpx;
+  height: 200rpx;
+  margin-right: 32rpx;
+  margin-left: 32rpx;
+}
+.return-btn {
+  margin-right: 20rpx;
+  height: 70rpx;
+  font-size: 10pt;
+  width: 140rpx;
+  background-color: rgb(3, 138, 159);
+  color: white;
+}
+.personal {
+  background-color: #ffffff;
+  width: 100%;
+  height: 144rpx;
+}
+</style>
+<template>
+  <view class="container">
+    <view class="personal">
+      <image class="image" src="{{avatar}}"></image>
+      <view style=" float:left;margin-left:30rpx;height:100%;vertical-align:center;">
+        <text style="display:block; line-height:70rpx; height:70rpx;">{{name}}</text>
+        <text style="display:block; color:rgb(176,176,176); line-height:70rpx; height:70rpx;font-size:12pt">待归还 本，共借阅了 本</text>
+      </view>
+    </view>
+    <view class="button-container">
+      <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">图书管理</text>
+      <view style="width:100%; background-color:#ffffff">
+          <button class="weui-btn record-btn checkin-btn" @tap="checkin()">扫描入库</button>
+      </view>
+
+
+      <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">借阅列表</text>
+      <view class="order-list" wx:for="{{orderList}}">
+        <image class="book-image" src="{{item.image}}"></image>
+        <text style="font-size:12pt">{{item.title}}</text>
+        <button class="return-btn" @tap="returnBook({{item.id}})">归还</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+export default class Personal extends wepy.page {
+  config = {
+    navigationBarTitleText: "test"
+  };
+  data = {
+    avatar: null,
+    name: null,
+    orderList: null
+  };
+  methods = {
+    returnBook(bookId_, event) {
+      console.log("bookId_: ", bookId_);
+      wepy.showLoading({
+        title: "请等待",
+        mask: true
+      });
+      this.$parent.getToken().then(token => {
+        wepy
+          .request({
+            url:
+              this.$parent.config.baseUrl + "books/return-back?token=" + token,
+            method: "POST",
+            data: {
+              bookId: bookId_
+            }
+          })
+          .then(res => {
+            wepy.hideLoading();
+            console.log("return book successfully: ", res);
+            this.getOrderList();
+          })
+          .catch(error => {
+            wepy.hideLoading();
+            console.log("return book error: ", error);
+          });
+      });
+    }
+  };
+  onLoad() {
+    console.log("onLoad");
+    this.setNavBar();
+    this.getPersonalIcon();
+  }
+  onShow() {
+    this.getOrderList();
+  }
+  setNavBar() {
+    wx.setNavigationBarTitle({
+      title: " 个人中心"
+    });
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: this.$parent.config.window.navigationBarBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: "easeIn"
+      }
+    });
+    wx.showTabBar({
+      aniamtion: true
+    });
+  }
+  getPersonalIcon() {
+    this.$parent.getUserInfo().then(res => {
+      console.log("res: ", res.avatarUrl);
+      this.avatar = res.avatarUrl;
+      this.name = res.nickName;
+      this.$apply();
+    });
+  }
+  getOrderList() {
+    this.$parent.getToken().then(token => {
+      wepy
+        .request(
+          this.$parent.config.baseUrl + "books/book-order-list?token=" + token
+        )
+        .then(res => {
+          this.orderList = res.data.data;
+          console.log("order list: ", this.orderList);
+          this.$apply();
+        })
+        .catch(error => {
+          console.log("check in book error: ", error);
+        });
+    });
+  }
+  checkin() {
+    wepy.scanCode().then(res => {
+      console.log("res: ", res);
+      var isbn = res.result;
+      wepy.showLoading({
+        title: "请等待",
+        mask: true
+      });
+      this.$parent.getToken().then(token => {
+        wepy
+          .request(
+            this.$parent.config.baseUrl +
+              "books/scan/" +
+              isbn +
+              "?token=" +
+              token
+          )
+          .then(res => {
+            wepy.hideLoading();
+            console.log("checkin book: ", res);
+          })
+          .catch(error => {
+            wepy.hideLoading();
+            console.log("check in book error: ", error);
+          });
+      });
+    });
+  }
+
+  onShareAppMessage(res) {
+    if (res.from === "button") {
+      // 来自页面内转发按钮
+      console.log(res.target);
+    }
+    return {
+      title: "CDI 图书馆",
+      path: "/pages/library",
+      success: function(res) {
+        // 转发成功
+      },
+      fail: function(res) {
+        // 转发失败
+      }
+    };
+  }
+}
+</script>
