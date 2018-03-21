@@ -16,7 +16,7 @@
 
     <view class="bookContainer">
       <repeat for="{{bookList}}" item="item">
-        <bookView title="item.title" imageSrc="item.image" id="item.id" status="item.status==0?false:true"></bookView>
+        <bookView title="item.title" imageSrc="item.image" id="item.id" status="item.status==1?true:false"></bookView>
       </repeat>
     </view>
   </view>
