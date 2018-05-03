@@ -10,17 +10,18 @@ export default class extends wepy.app {
       "pages/library",
       "pages/personal",
       "pages/book-detail",
-      "pages/book-history"
+      "pages/book-history",
+      "pages/on-boarding"
     ],
     window: {
       backgroundTextStyle: "dark",
       navigationBarBackgroundColor: "#ffffff",
-      navigationBarTitleText: "CDI图书馆",
+      navigationBarTitleText: "小飞图书馆",
       navigationBarTextStyle: "black",
       enablePullDownRefresh: true
     },
     // baseUrl: "http://192.168.199.136:9901/",
-    baseUrl: "https://www.cdip.philips.com.cn/miniapp/",
+    baseUrl: "https://leiwenhao.com/api/",
     tabBar: {
       color: "#000000",
       selectedColor: "#09bb07",
@@ -48,6 +49,53 @@ export default class extends wepy.app {
     super();
     this.use("requestfix");
     this.use("promisify");
+    //拦截request请求
+    this.intercept("request", {
+      // 请求成功后的回调函数
+      success(p) {
+        // 可以在这里对收到的响应数据对象进行加工处理
+        console.log("request success: ", p);
+        if (p.statusCode == 401) {
+          console.log("401 error, remove access token in storage");
+          try {
+            wx.removeStorageSync("accessToken");
+            wx.showModal({
+              content: "出错啦，小程序将会重新刷新",
+              showCancel: false,
+              success: function(res) {
+                if (res.confirm) {
+                  setTimeout(() => {
+                    wx.reLaunch({
+                      url: "library"
+                    });
+                  }, 500);
+                }
+              }
+            });
+          } catch (e) {}
+        }
+        if (p.data.code == 40001) {
+          console.log("to on boarding page.");
+          //register user
+          wx.navigateTo({
+            url: "on-boarding"
+          });
+        }
+        if (p.statusCode != 200) {
+          wx.showModal({
+            content: "内部错误，请稍后再试",
+            showCancel: false
+          });
+        }
+        return p;
+      },
+      //请求失败后的回调函数
+      fail(p) {
+        console.log("request fail: ", p);
+        // 必须返回响应数据对象，否则后续无法对响应数据进行处理
+        return p;
+      }
+    });
   }
   onLaunch() {
     console.log("on launch");
@@ -137,7 +185,7 @@ export default class extends wepy.app {
               })
               .then(res => {
                 console.log("login from backend: " + JSON.stringify(res));
-                this.globalData.accessToken = res.data.token;
+                this.globalData.accessToken = res.data.data.token;
                 wepy
                   .setStorage({
                     key: "accessToken",
@@ -162,10 +210,14 @@ export default class extends wepy.app {
           })
           .catch(error => {
             console.log("Auth error." + error);
-            wx.showToast({
-              title: "登录失败，授权错误",
-              icon: "none",
-              duration: 2000
+            wx.showModal({
+              content: "请允许小程序访问个人资料",
+              showCancel: false,
+              success: function(res) {
+                if (res.confirm) {
+                  wx.openSetting();
+                }
+              }
             });
           });
       });

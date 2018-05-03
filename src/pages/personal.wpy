@@ -41,6 +41,7 @@
   margin-right: 20rpx;
   height: 70rpx;
   font-size: 10pt;
+  border-radius: 5rpx;
   width: 140rpx;
   background-color: rgb(3, 138, 159);
   color: white;
@@ -57,19 +58,16 @@
       <image class="image" src="{{avatar}}"></image>
       <view style=" float:left;margin-left:30rpx;height:100%;vertical-align:center;">
         <text style="display:block; line-height:70rpx; height:70rpx;">{{name}}</text>
-        <text style="display:block; color:rgb(176,176,176); line-height:70rpx; height:70rpx;font-size:12pt">待归还 本，共借阅了 本</text>
       </view>
     </view>
     <view class="button-container">
-      <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">图书管理</text>
-      <view style="width:100%; background-color:#ffffff">
-          <button class="weui-btn record-btn checkin-btn" @tap="checkin()">扫描入库</button>
-      </view>
-
-
+      <!-- <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">图书管理</text>
+        <view style="width:100%; background-color:#ffffff">
+            <button class="weui-btn record-btn checkin-btn" @tap="checkin()">扫描入库</button>
+        </view> -->
       <text style="margin-left:32rpx;margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">借阅列表</text>
       <view class="order-list" wx:for="{{orderList}}">
-        <image class="book-image" src="{{item.image}}"></image>
+        <image class="book-image" mode="aspectFill" src="{{item.image}}"></image>
         <text style="font-size:12pt">{{item.title}}</text>
         <button class="return-btn" @tap="returnBook({{item.id}})">归还</button>
       </view>
@@ -85,35 +83,45 @@ export default class Personal extends wepy.page {
   };
   data = {
     avatar: null,
-    name: null,
+    name: "",
     orderList: null
   };
   methods = {
     returnBook(bookId_, event) {
-      console.log("bookId_: ", bookId_);
-      wepy.showLoading({
-        title: "请等待",
-        mask: true
-      });
-      this.$parent.getToken().then(token => {
-        wepy
-          .request({
-            url:
-              this.$parent.config.baseUrl + "books/return-back?token=" + token,
-            method: "POST",
-            data: {
-              bookId: bookId_
-            }
-          })
-          .then(res => {
-            wepy.hideLoading();
-            console.log("return book successfully: ", res);
-            this.getOrderList();
-          })
-          .catch(error => {
-            wepy.hideLoading();
-            console.log("return book error: ", error);
-          });
+      wx.showModal({
+        content: "确认归还吗？",
+        showCancel: true,
+        success: res => {
+          if (res.confirm) {
+            console.log("bookId_: ", bookId_);
+            wepy.showLoading({
+              title: "请等待",
+              mask: true
+            });
+            this.$parent.getToken().then(token => {
+              wepy
+                .request({
+                  url:
+                    this.$parent.config.baseUrl +
+                    "books/return-back?token=" +
+                    token,
+                  method: "POST",
+                  data: {
+                    bookId: bookId_
+                  }
+                })
+                .then(res => {
+                  wepy.hideLoading();
+                  console.log("return book successfully: ", res);
+                  this.getOrderList();
+                })
+                .catch(error => {
+                  wepy.hideLoading();
+                  console.log("return book error: ", error);
+                });
+            });
+          }
+        }
       });
     }
   };
@@ -193,7 +201,6 @@ export default class Personal extends wepy.page {
       });
     });
   }
-
   onShareAppMessage(res) {
     if (res.from === "button") {
       // 来自页面内转发按钮

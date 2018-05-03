@@ -74,7 +74,7 @@
 import wepy from "wepy";
 export default class BookHistory extends wepy.page {
   config = {
-    navigationBarTitleText: "test"
+    navigationBarTitleText: "借阅记录"
   };
   data = {
     avatar: null,
@@ -110,6 +110,10 @@ export default class BookHistory extends wepy.page {
     });
   }
   getHistory() {
+    wepy.showLoading({
+      title: "请等待",
+      mask: true
+    });
     this.$parent.getToken().then(token => {
       wepy
         .request(
@@ -125,9 +129,11 @@ export default class BookHistory extends wepy.page {
             this.currentBorrow = this.bookHistory.shift();
           }
           console.log("bookHistory list: ", this.bookHistory);
+          wepy.hideLoading();
           this.$apply();
         })
         .catch(error => {
+          wepy.hideLoading();
           console.log("bookHistory error: ", error);
         });
     });

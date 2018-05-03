@@ -1,25 +1,54 @@
 <style lang="less">
+page {
+  height: 100%;
+  background-color: rgb(251, 251, 251);
+}
 .bookContainer {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-around;
-  margin-top: 50rpx;
+  margin-top: 30rpx;
+  margin-left: 20rpx;
+  margin-right: 20rpx;
 }
 .containerWrapper {
   background-color: rgb(251, 251, 251);
+}
+.borrow-btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  background-color: #ffffff;
+  margin-bottom: 30rpx;
+  margin-top: 30rpx;
+  height: 90rpx;
+  border: solid;
+  border-width: 4rpx;
+  border-color: #f5f5f5;
+}
+.scan-image {
+  height: 36rpx;
+  width: 36rpx;
+  margin-right: 30rpx;
+}
+.borrow-btn {
+  color: rgb(3, 138, 159);
 }
 </style>
 
 <template>
   <view class="container,containerWrapper">
-
     <view class="bookContainer">
+      <view class="borrow-btn-container" @tap="borrow()">
+        <image class="scan-image" src="images/scan.png"></image>
+        <text class="borrow-btn">扫码借书</text>
+      </view>
       <repeat for="{{bookList}}" item="item">
         <bookView title="item.title" imageSrc="item.image" id="item.id" status="item.status==1?true:false"></bookView>
       </repeat>
     </view>
-  </view>
   </view>
 </template>
 
@@ -28,7 +57,7 @@ import wepy from "wepy";
 import BookView from "../components/book-view";
 export default class Library extends wepy.page {
   config = {
-    navigationBarTitleText: "test"
+    navigationBarTitleText: "小飞图书馆"
   };
   components = {
     bookView: BookView
@@ -36,12 +65,50 @@ export default class Library extends wepy.page {
   data = {
     bookList: []
   };
+  methods = {
+    borrow() {
+      wepy.scanCode().then(res => {
+        console.log("res: ", res);
+        var isbn = res.result;
+        wepy.showLoading({
+          title: "请等待",
+          mask: true
+        });
+        this.$parent.getToken().then(token => {
+          wepy
+            .request(
+              this.$parent.config.baseUrl +
+                "books/scan/" +
+                isbn +
+                "?token=" +
+                token
+            )
+            .then(res => {
+              wepy.hideLoading();
+              let msg = "借阅成功";
+              if (res.data.code != 200) {
+                msg = res.data.message;
+              }
+              wx.showModal({
+                content: msg,
+                showCancel: false
+              });
+              console.log("borrow book: ", res);
+            })
+            .catch(error => {
+              wepy.hideLoading();
+              console.log("borrow book error: ", error);
+            });
+        });
+      });
+    }
+  };
   onLoad() {
     console.log("onLoad");
     this.setNavBar();
     this.getBooks();
   }
-  onShow() {
+  onRoute() {
     // this.getBooks();
   }
   setNavBar() {
@@ -79,7 +146,6 @@ export default class Library extends wepy.page {
         });
     });
   }
-
   onShareAppMessage(res) {
     if (res.from === "button") {
       // 来自页面内转发按钮
@@ -96,7 +162,6 @@ export default class Library extends wepy.page {
       }
     };
   }
-
   onPullDownRefresh() {
     this.getBooks();
   }

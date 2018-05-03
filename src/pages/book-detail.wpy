@@ -28,6 +28,7 @@
   margin-bottom: 30rpx;
   overflow: hidden;
   color: #000000;
+  text-align: center;
 }
 .detailContainer {
   background-color: rgb(251, 251, 251);
@@ -36,7 +37,7 @@
 </style>
 
 <template>
-  <view wx:if="{{bookDetail}}">
+  <view wx:if="{{bookLoaded}}">
     <view class="button-container">
       <view class="bookImageContainer">
         <image class="image" src="{{bookImage}}"></image>
@@ -46,7 +47,7 @@
         <text style=" background-color: rgb(251, 251, 251);margin-bottom:30rpx;margin-top:30rpx; font-size:13pt; color:rgb(3,158,159)">内容简介\n</text>
         <text style="font-size:14pt; color:rgb(95,95,95)">{{bookDetail}}</text>
       </view>
-      <button class="weui-btn record-btn borrow"  disabled="{{!canBorrow}}" @tap="borrow()">借阅</button>
+      <!-- <button class="weui-btn record-btn borrow"  disabled="{{!canBorrow}}" @tap="borrow()">借阅</button>／ -->
       <button class="weui-btn record-btn borrow"  @tap="gotoHistory()">查询借阅记录</button>
     </view>
   </view>
@@ -56,13 +57,14 @@
 import wepy from "wepy";
 export default class Personal extends wepy.page {
   config = {
-    navigationBarTitleText: "test"
+    navigationBarTitleText: "书籍详情"
   };
   data = {
     bookDetail: null,
     bookId: null,
     bookImage: null,
     bookTitle: null,
+    bookLoaded: false,
     canBorrow: true
   };
   onLoad(option) {
@@ -108,6 +110,7 @@ export default class Personal extends wepy.page {
           this.bookDetail = data.summary;
           this.bookImage = data.image;
           this.bookTitle = data.title;
+          this.bookLoaded = true;
           if (data.status == 1) {
             this.canBorrow = false;
           } else {
