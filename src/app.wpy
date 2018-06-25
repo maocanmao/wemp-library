@@ -1,5 +1,4 @@
 <style lang="less">
-
 </style>
 
 <script>
@@ -11,7 +10,8 @@ export default class extends wepy.app {
       "pages/personal",
       "pages/book-detail",
       "pages/book-history",
-      "pages/on-boarding"
+      "pages/on-boarding",
+      "pages/get-user-info"
     ],
     window: {
       backgroundTextStyle: "dark",
@@ -21,7 +21,7 @@ export default class extends wepy.app {
       enablePullDownRefresh: true
     },
     // baseUrl: "http://192.168.199.136:9901/",
-    baseUrl: "https://leiwenhao.com/api/",
+    baseUrl: "https://www.cdip.philips.com.cn/cdi-library/api/",
     tabBar: {
       color: "#000000",
       selectedColor: "#09bb07",
@@ -106,20 +106,18 @@ export default class extends wepy.app {
         console.log("get from cache");
         resolve(this.globalData.userInfo);
       } else {
-        wepy
-          .getUserInfo()
-          .then(res => {
-            // console.log("globle data: " + JSON.stringify(res));
-            this.globalData.userInfo = res.userInfo;
-            console.log(
-              "user info: " + JSON.stringify(this.globalData.userInfo)
-            );
-            resolve(this.globalData.userInfo);
-          })
-          .catch(error => {
-            console.log("error: ", error);
-            reject();
-          });
+        wepy.hideLoading();
+        wx.showModal({
+          content: "请允许小程序访问个人资料",
+          showCancel: false,
+          success: function(res) {
+            if (res.confirm) {
+              wx.reLaunch({
+                url: "get-user-info"
+              });
+            }
+          }
+        });
       }
     });
   }
@@ -210,15 +208,7 @@ export default class extends wepy.app {
           })
           .catch(error => {
             console.log("Auth error." + error);
-            wx.showModal({
-              content: "请允许小程序访问个人资料",
-              showCancel: false,
-              success: function(res) {
-                if (res.confirm) {
-                  wx.openSetting();
-                }
-              }
-            });
+            wepy.hideLoading();
           });
       });
     });

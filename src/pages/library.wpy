@@ -21,7 +21,7 @@ page {
   align-items: center;
   width: 100%;
   background-color: #ffffff;
-  margin-bottom: 30rpx;
+  margin-bottom: 10rpx;
   margin-top: 30rpx;
   height: 90rpx;
   border: solid;
@@ -36,17 +36,30 @@ page {
 .borrow-btn {
   color: rgb(3, 138, 159);
 }
+.copyright-container {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+.copyright {
+  font-size: 22rpx;
+  color: #a2a2a2;
+}
 </style>
 
 <template>
   <view class="container,containerWrapper">
     <view class="bookContainer">
       <view class="borrow-btn-container" @tap="borrow()">
-        <image class="scan-image" src="images/scan.png"></image>
+        <image class="scan-image" src="images/scan.png"/>
         <text class="borrow-btn">扫码借书</text>
       </view>
+      <view class="copyright-container">
+        <text class="copyright">Powered by CDIP</text>
+      </view>
+
       <repeat for="{{bookList}}" item="item">
-        <bookView title="item.title" imageSrc="item.image" id="item.id" status="item.status==1?true:false"></bookView>
+        <bookView :title="item.title" :imageSrc="item.image" :id="item.id" :status="item.status==1?true:false"></bookView>
       </repeat>
     </view>
   </view>

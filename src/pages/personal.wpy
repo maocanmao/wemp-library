@@ -55,9 +55,10 @@
 <template>
   <view class="container">
     <view class="personal">
-      <image class="image" src="{{avatar}}"></image>
+      <open-data class="image"  type="userAvatarUrl"></open-data>
       <view style=" float:left;margin-left:30rpx;height:100%;vertical-align:center;">
-        <text style="display:block; line-height:70rpx; height:70rpx;">{{name}}</text>
+        <!-- <text style="display:block; line-height:70rpx; height:70rpx;">{{name}}</text> -->
+        <open-data style="display:block; line-height:70rpx; height:70rpx;" type="userNickName"></open-data>
       </view>
     </view>
     <view class="button-container">
@@ -128,7 +129,7 @@ export default class Personal extends wepy.page {
   onLoad() {
     console.log("onLoad");
     this.setNavBar();
-    this.getPersonalIcon();
+    // this.getPersonalIcon();
   }
   onShow() {
     this.getOrderList();
@@ -216,6 +217,10 @@ export default class Personal extends wepy.page {
         // 转发失败
       }
     };
+  }
+
+  onPullDownRefresh() {
+    wx.stopPullDownRefresh();
   }
 }
 </script>

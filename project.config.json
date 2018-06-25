@@ -1,0 +1,13 @@
+{
+  "description": "CDI library",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "Project name",
+  "miniprogramRoot": "./dist"
+}

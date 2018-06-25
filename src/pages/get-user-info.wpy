@@ -1,0 +1,113 @@
+<style lang="less">
+.container {
+  background: rgb(251, 251, 251);
+}
+.image {
+  height: 144rpx;
+  width: 144rpx;
+  margin-left: 40rpx;
+  border-radius: 50%;
+  float: left;
+}
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20rpx 0;
+  flex-direction: column;
+}
+.checkin-btn {
+  margin-top: 40rpx;
+  width: 500rpx;
+  margin-bottom: 20rpx;
+  background-color: rgb(3, 138, 159);
+  color: #ffffff;
+}
+.order-list {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5rpx;
+  background: #ffffff;
+  padding-bottom: 30rpx;
+  padding-top: 30rpx;
+}
+.book-image {
+  width: 140rpx;
+  height: 200rpx;
+  margin-right: 32rpx;
+  margin-left: 32rpx;
+}
+.return-btn {
+  margin-right: 20rpx;
+  height: 70rpx;
+  font-size: 10pt;
+  width: 140rpx;
+  background-color: rgb(3, 138, 159);
+  color: white;
+}
+.personal {
+  background-color: #ffffff;
+  width: 100%;
+  height: 144rpx;
+}
+.checkbox {
+  margin-left: 32rpx;
+}
+.active_code {
+  margin-top: 20rpx;
+  margin-left: 32rpx;
+  width: 80%;
+  height: 50rpx;
+  border-radius: 4px;
+  background-color: #fafafa;
+  border: solid 0.5px #eaeaea;
+  padding: 20rpx;
+}
+</style>
+
+<template>
+  <view class="container">
+    <view class="button-container">
+      <button class="weui-btn checkin-btn" open-type="getUserInfo" bindgetuserinfo="onGotUserInfo">获取用户信息</button>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from "wepy";
+export default class GetUserInfo extends wepy.page {
+  config = {
+    navigationBarTitleText: "允许获取资料"
+  };
+  data = {};
+  methods = {
+    onGotUserInfo(e) {
+      this.$parent.globalData.userInfo = e.detail.userInfo;
+      wx.reLaunch({
+        url: "library"
+      });
+    }
+  };
+  onLoad() {
+    console.log("onLoad");
+    this.setNavBar();
+  }
+  onShow() {}
+  setNavBar() {
+    wx.setNavigationBarTitle({
+      title: " 允许获取资料"
+    });
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: this.$parent.config.window.navigationBarBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: "easeIn"
+      }
+    });
+    wx.showTabBar({
+      aniamtion: true
+    });
+  }
+}
+</script>
